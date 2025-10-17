@@ -1,43 +1,4 @@
-from si.data.dataset import Dataset
 import pandas as pd
-import numpy as np
- 
-def read_csv(filename: str, sep: str, features: bool, label: bool) -> Dataset:
-    
-    dataframe = pd.read_csv(filepath_or_buffer=filename, sep=sep)
-    if features and label:
-        X = dataframe.iloc[:, :-1].to_numpy() # convertemos porque x e y np
-        y = dataframe.iloc[:, -1].to_numpy()
-        feature_names = dataframe.columns[:-1].tolist()
-        label_name = dataframe.columns[-1]
-        return Dataset(X=X, y=y, features=feature_names, label=label_name)
-    elif features and not label:
-        X = dataframe.to_numpy()
-        feature_names = dataframe.columns
-        return Dataset(X=X, features=feature_names)
-    elif not features and label:
-        X = np.array() 
-        y = dataframe.iloc[:, -1].to_numpy()
-        label_name = dataframe.columns[-1]
-        return Dataset(X=X, y=y, label=label_name) #chama o construtor (funçao init que corre) e faz a correspondencia entre os parametros e as instancias
-    else:
-        return None
-    
-def write_csv(filename:str, sep:str = ";", dataset = Dataset, features: bool = False, label: bool =False) -> None:
-    df = pd.Dataframe(dataset.x)
-    if features:
-        df.columns = dataset.features
-        
-    if label:
-        y = dataset.y
-        label_name = dataset.label
-        df[label_name] = y
-   
-    else:
-        y = None
-        label_name = None
-    
-    df.to_csv(filename, sep=sep, index=False)import pandas as pd
 
 from si.data.dataset import Dataset
 
