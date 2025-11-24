@@ -125,7 +125,76 @@ class Dataset:
             "var": self.get_variance()
         }
         return pd.DataFrame.from_dict(data, orient="index", columns=self.features)
+    
+    def dropna(self):
+        """
+        Drops rows with NaN values from the dataset
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        Dataset
+        """
+        mask = ~np.isnan(self.X).any(axis=1)
+        self.X = self.X[mask]
+        self.y = self.y[mask]
+        return self
+    
+    def fillna(self, value: float or str):
+        """
+        Replaces all null values in the dataset with the specified value, mean, or median.
 
+        Parameters
+        ----------
+        value : float or str
+            The value to replace NaN with. If "mean", replaces with the feature's mean.
+            If "median", replaces with the feature's median.
+            If random value, replaces with that value.
+
+        Returns
+        -------
+        Dataset
+            The modified Dataset object, with NaN values replaced.
+        """
+        if isinstance(value, str):
+            if value == "mean":
+                col_means = np.nanmean(self.X, axis=0)
+                for i in range(self.X.shape[1]):
+                    mask = np.isnan(self.X[:,i])
+                    self.X[mask, i] = np.take(col_means, [i])
+            elif value == "median":
+                col_medians = np.nanmedian(self.X, axis=0)
+                for i in range(self.X.shape[1]):
+                    mask = np.isnan(self.X[:,i])
+                    self.X[mask, i] = np.take(col_medians, [i])                   
+        else:
+            mask = np.isnan(self.X)
+            self.X[mask] = value
+        
+        return self
+
+    def remove_by_index(self, index = int):
+        """
+        Removes a sample from the dataset by its index.
+
+        Parameters
+        ----------
+        index : int
+            The index of the sample to remove.
+
+        Returns
+        -------
+        Dataset
+            The modified Dataset object, with the specified sample removed.
+        """
+        self.X = np.delete(self.X, index, axis=0)
+        self.y = np.delete(self.y, index, axis=0)
+        return self
+        
+    
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, label: str = None):
         """
@@ -214,3 +283,7 @@ if __name__ == '__main__':
     print(dataset.get_min())
     print(dataset.get_max())
     print(dataset.summary())
+    print(dataset.dropna())
+    print(dataset.fillna("mean"))
+    print(dataset.remove_by_index(0))
+    
