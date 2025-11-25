@@ -1,36 +1,38 @@
 import numpy as np
+from typing import List, Tuple
 from si.base.model import Model
-from si.data.dataset import Dataset
 from si.models.decision_tree_classifier import DecisionTreeClassifier
+from si.data.dataset import Dataset
 from si.metrics.accuracy import accuracy
+
 
 class RandomForestClassifier(Model):
     """
     Random Forest Classifier.
 
+    Random Forest is an ensemble learning method that operates by constructing multiple decision trees
+    during training and outputting the mode of the classes (classification) of the individual trees.
+
     Parameters
     ----------
-    n_estimators : int, default=100
-        Number of decision trees to use.
-
+    n_estimators : int, default=10
+        The number of trees in the forest.
     max_features : int, optional
-        Maximum number of features to use per tree. If None, it is set to sqrt(n_features).
-
+        The number of features to consider when looking for the best split.
+        If None, then `max_features = sqrt(n_features)`.
     min_sample_split : int, default=2
-        Minimum number of samples required to split a node.
-
+        The minimum number of samples required to split an internal node.
     max_depth : int, optional
-        Maximum depth of the trees. If None, nodes are expanded until all leaves are pure.
-
-    mode : str, default='gini'
-        Impurity calculation mode ('gini' or 'entropy').
-
-    seed : int, optional
-        Random seed for reproducibility.
+        The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure.
+    mode : str, default="gini"
+        The function to measure the quality of a split. Supported criteria are "gini" for the Gini impurity
+        and "entropy" for the information gain.
+    seed : int, default=42
+        Seed for the random number generator.
     """
 
-    def __init__(self, n_estimators: int = 100, max_features: int = None, min_sample_split: int = 2,
-                 max_depth: int = None, mode: str = 'gini', seed: int = None):
+    def __init__(self, n_estimators: int = 10, max_features: int = None, min_sample_split: int = 2,
+                 max_depth: int = None, mode: str = "gini", seed: int = 42):
         super().__init__()
         self.n_estimators = n_estimators
         self.max_features = max_features
@@ -38,96 +40,101 @@ class RandomForestClassifier(Model):
         self.max_depth = max_depth
         self.mode = mode
         self.seed = seed
-        self.trees = []  # List to store tuples of (features, tree)
 
-    def _fit(self, dataset: Dataset) -> 'RandomForestClassifier':
+        # model parameters
+        self.trees: List[Tuple[np.ndarray, DecisionTreeClassifier]] = []  # (feature_indices, tree)
+
+    def _fit(self, dataset: Dataset) -> "RandomForestClassifier":
         """
-        Train the decision trees of the random forest.
+        Fit the Random Forest model according to the given training data.
 
         Parameters
         ----------
         dataset : Dataset
-            The dataset to fit the model to.
+            The dataset used to train the model.
 
         Returns
         -------
         self : RandomForestClassifier
             The fitted model.
         """
-        if self.seed is not None:
-            np.random.seed(self.seed)
+        
+        np.random.seed(self.seed)
 
         n_samples, n_features = dataset.X.shape
-
-        # Set max_features to sqrt(n_features) if None
         if self.max_features is None:
             self.max_features = int(np.sqrt(n_features))
 
-        # Train each tree
+        self.trees = []
         for _ in range(self.n_estimators):
-            # Create a bootstrap dataset (with replacement)
-            indices = np.random.choice(n_samples, n_samples, replace=True)
-            X_bootstrap = dataset.X[indices]
-            y_bootstrap = dataset.y[indices]
+            # bootstrap samples
+            idx_samples = np.random.choice(n_samples, size=n_samples, replace=True)
+            # random subset of features
+            idx_features = np.random.choice(n_features, size=self.max_features, replace=False)
 
-            # Randomly select features (without replacement)
-            feature_indices = np.random.choice(n_features, self.max_features, replace=False)
-            X_bootstrap = X_bootstrap[:, feature_indices]
+            X_boot = dataset.X[idx_samples][:, idx_features]
+            y_boot = dataset.y[idx_samples]
+            boot_dataset = Dataset(X_boot, y_boot)
 
-            # Create and train a decision tree
-            # Set max_depth to a large number if it is None
-            current_max_depth = 1000 if self.max_depth is None else self.max_depth
             tree = DecisionTreeClassifier(
                 min_sample_split=self.min_sample_split,
-                max_depth=current_max_depth,
+                max_depth=self.max_depth,
                 mode=self.mode
-            )
-            tree.fit(Dataset(X_bootstrap, y_bootstrap))
+            ).fit(boot_dataset)
 
-            # Append the features and tree to the list
-            self.trees.append((feature_indices, tree))
+            self.trees.append((idx_features, tree))
 
         return self
 
     def _predict(self, dataset: Dataset) -> np.ndarray:
         """
-        Predict the labels using the ensemble models.
+        Predict class for X in the dataset.
+
+        The predicted class of an input sample is computed as the majority vote of the
+        predictions of the trees in the forest.
 
         Parameters
         ----------
         dataset : Dataset
-            The dataset to predict.
+            The dataset for which to predict the class.
 
         Returns
         -------
         y_pred : np.ndarray
-            The predicted labels.
+            The predicted classes.
         """
-        n_samples = dataset.X.shape[0]
-        predictions = np.zeros((n_samples, len(self.trees)))
-
-        for i, (feature_indices, tree) in enumerate(self.trees):
+        tree_predictions = []
+        for feature_indices, tree in self.trees:
             X_subset = dataset.X[:, feature_indices]
-            predictions[:, i] = tree.predict(X_subset)
+            preds = tree.predict(Dataset(X_subset))
+            tree_predictions.append(preds)
 
-        # Get the most common predicted class for each sample
-        y_pred = np.array([np.bincount(row.astype(int)).argmax() for row in predictions])
+        tree_predictions = np.array(tree_predictions)  # (n_estimators, n_samples)
 
-        return y_pred
+        # majority vote per sample
+        final_pred = []
+        for i in range(dataset.X.shape[0]):
+            votes = tree_predictions[:, i]
+            values, counts = np.unique(votes, return_counts=True)
+            final_pred.append(values[np.argmax(counts)])
 
-    def _score(self, dataset: Dataset) -> float:
+        return np.array(final_pred)
+
+
+    def _score(self, dataset: Dataset, predictions: np.ndarray) -> float:
         """
-        Compute the accuracy between predicted and real labels.
+        Return the accuracy score on the given dataset and predictions.
 
         Parameters
         ----------
         dataset : Dataset
-            The dataset to score the model on.
+            The dataset containing the true labels.
+        predictions : np.ndarray
+            The predicted labels.
 
         Returns
         -------
         score : float
             The accuracy score.
         """
-        y_pred = self._predict(dataset)
-        return accuracy(dataset.y, y_pred)
+        return accuracy(dataset.y, predictions)
