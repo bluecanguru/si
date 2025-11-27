@@ -17,6 +17,18 @@ class RidgeRegressionLeastSquares(Estimator):
     """
 
     def __init__(self, l2_penalty: float = 1.0, scale: bool = True):
+        """
+        Initializes the Ridge Regression Least Squares estimator.
+
+        Parameters
+        ----------
+        l2_penalty : float, default=1.0
+            L2 regularization parameter (lambda). Controls the strength of the penalty.
+        
+        scale : bool, default=True
+            Whether to standardize the input features (X) by removing the mean and scaling to unit variance
+            during fitting and prediction.
+        """
         super().__init__()
         self.l2_penalty = l2_penalty
         self.scale = scale
@@ -42,7 +54,6 @@ class RidgeRegressionLeastSquares(Estimator):
         X = dataset.X
         y = dataset.y
 
-        # 1. Scale the data if required
         if self.scale:
             self.mean = np.mean(X, axis=0)
             self.std = np.std(X, axis=0)
@@ -51,21 +62,17 @@ class RidgeRegressionLeastSquares(Estimator):
             self.mean = np.zeros(X.shape[1])
             self.std = np.ones(X.shape[1])
 
-        # 2. Add intercept term to X
         X = np.c_[np.ones(X.shape[0]), X]
 
-        # 3. Compute the penalty matrix
         penalty_matrix = self.l2_penalty * np.eye(X.shape[1])
-        penalty_matrix[0, 0] = 0  # Do not penalize the intercept
+        penalty_matrix[0, 0] = 0  
 
-        # 4. Compute the model parameters
         XTX = X.T.dot(X)
         XTX_plus_penalty = XTX + penalty_matrix
         XTX_inv = np.linalg.inv(XTX_plus_penalty)
         XTy = X.T.dot(y)
         thetas = XTX_inv.dot(XTy)
 
-        # Extract theta_zero and theta
         self.theta_zero = thetas[0]
         self.theta = thetas[1:]
 
@@ -85,14 +92,11 @@ class RidgeRegressionLeastSquares(Estimator):
         y_pred : np.ndarray
             The predicted target values.
         """
-        # 1. Scale the data if required
         if self.scale:
             X = (X - self.mean) / self.std
 
-        # 2. Add intercept term to X
         X = np.c_[np.ones(X.shape[0]), X]
 
-        # 3. Compute the predicted Y
         thetas = np.r_[self.theta_zero, self.theta]
         y_pred = X.dot(thetas)
 

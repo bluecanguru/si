@@ -17,17 +17,18 @@ def tanimoto_similarity(x, y):
     similarities : ndarray, shape (n_samples,)
         An array containing the Tanimoto similarities between x and each sample in y.
     """
-    x = np.asarray(x, dtype=bool)
+    x = np.asarray(x, dtype=bool).reshape(-1)
     y = np.asarray(y, dtype=bool)
 
-    # Compute dot products (intersection)
-    dot_products = np.dot(y, x)
+    # intersection = count of features where both are 1
+    intersection = np.logical_and(y, x).sum(axis=1)
+    
+    # union = count of features where either is 1
+    union = np.logical_or(y, x).sum(axis=1)
+    
+    similarities = intersection / union
 
-    # Compute squared norms
-    x_norm_sq = np.sum(x)
-    y_norm_sq = np.sum(y, axis=1)
-
-    # Compute Tanimoto similarity
-    similarities = dot_products / (x_norm_sq + y_norm_sq - dot_products)
-
+    # avoid division by zero
+    similarities[np.isnan(similarities)] = 0.0    
+    
     return similarities

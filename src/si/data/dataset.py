@@ -128,7 +128,7 @@ class Dataset:
     
     def dropna(self):
         """
-        Drops rows with NaN values from the dataset
+        Drops any rows from the dataset that contain at least one NaN (Not a Number) value.
         
         Parameters
         ----------
@@ -136,7 +136,7 @@ class Dataset:
         
         Returns
         -------
-        Dataset
+        Modified Dataset object with rows containing NaN values removed.
         """
         mask = ~np.isnan(self.X).any(axis=1)
         self.X = self.X[mask]
@@ -150,9 +150,10 @@ class Dataset:
         Parameters
         ----------
         value : float or str
-            The value to replace NaN with. If "mean", replaces with the feature's mean.
-            If "median", replaces with the feature's median.
-            If random value, replaces with that value.
+            The value to replace NaN with.
+            If "mean", replaces NaN values in each feature (column) with that feature's mean.
+            If "median", replaces NaN values in each feature (column) with that feature's median.
+            If a float is provided, all NaN values are replaced with that float.
 
         Returns
         -------

@@ -41,8 +41,7 @@ class RandomForestClassifier(Model):
         self.mode = mode
         self.seed = seed
 
-        # model parameters
-        self.trees: List[Tuple[np.ndarray, DecisionTreeClassifier]] = []  # (feature_indices, tree)
+        self.trees: List[Tuple[np.ndarray, DecisionTreeClassifier]] = []
 
     def _fit(self, dataset: Dataset) -> "RandomForestClassifier":
         """
@@ -67,9 +66,7 @@ class RandomForestClassifier(Model):
 
         self.trees = []
         for _ in range(self.n_estimators):
-            # bootstrap samples
             idx_samples = np.random.choice(n_samples, size=n_samples, replace=True)
-            # random subset of features
             idx_features = np.random.choice(n_features, size=self.max_features, replace=False)
 
             X_boot = dataset.X[idx_samples][:, idx_features]
@@ -109,9 +106,8 @@ class RandomForestClassifier(Model):
             preds = tree.predict(Dataset(X_subset))
             tree_predictions.append(preds)
 
-        tree_predictions = np.array(tree_predictions)  # (n_estimators, n_samples)
+        tree_predictions = np.array(tree_predictions) 
 
-        # majority vote per sample
         final_pred = []
         for i in range(dataset.X.shape[0]):
             votes = tree_predictions[:, i]

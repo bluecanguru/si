@@ -29,3 +29,34 @@ class TestDataset(unittest.TestCase):
         dataset = Dataset.from_random(10, 5, 3, features=['a', 'b', 'c', 'd', 'e'], label='y')
         self.assertEqual((10, 5), dataset.shape())
         self.assertTrue(dataset.has_label())
+        
+    def test_dropna(self):
+        X = np.array([[1, 2, np.nan], [4, 5, 6], [np.nan, 1, 2]])
+        y = np.array([0, 1, 0])
+        dataset = Dataset(X, y)
+        dataset = dataset.dropna()
+        np.testing.assert_array_equal(dataset.X, np.array([[4, 5, 6]]))
+        np.testing.assert_array_equal(dataset.y, np.array([1]))
+
+    def test_fillna_with_value(self):
+        X = np.array([[1, np.nan], [np.nan, 3]])
+        y = np.array([0, 1])
+        dataset = Dataset(X, y)
+        dataset = dataset.fillna(0)
+        np.testing.assert_array_equal(dataset.X, np.array([[1, 0], [0, 3]]))
+
+    def test_fillna_with_mean(self):
+        X = np.array([[1, np.nan], [3, 5]])
+        y = np.array([0, 1])
+        dataset = Dataset(X, y)
+        dataset = dataset.fillna("mean")
+        expected = np.array([[1, 5], [3, 5]])  # mean of col2 = 5
+        np.testing.assert_array_equal(dataset.X, expected)
+
+    def test_remove_by_index(self):
+        X = np.array([[1, 2], [3, 4], [5, 6]])
+        y = np.array([0, 1, 2])
+        dataset = Dataset(X, y)
+        dataset = dataset.remove_by_index(1)
+        np.testing.assert_array_equal(dataset.X, np.array([[1, 2], [5, 6]]))
+        np.testing.assert_array_equal(dataset.y, np.array([0, 2]))

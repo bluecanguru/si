@@ -57,13 +57,10 @@ class KNNRegressor(Estimator):
         X = np.asarray(X)
         y_pred = np.zeros(X.shape[0])
         for i, x in enumerate(X):
-            # vectorized distance computation to all training samples
             distances = np.linalg.norm(self.X_train - x, axis=1)
 
-            # Get indices of the k nearest neighbors
             nearest_indices = np.argsort(distances)[:self.k]
 
-            # Predict the target as the mean of the k nearest neighbors
             y_pred[i] = np.mean(self.y_train[nearest_indices])
 
         return y_pred
