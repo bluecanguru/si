@@ -6,24 +6,18 @@ from si.data.dataset import Dataset
 class SelectPercentile(Transformer):
     """
     Select features according to a percentile of the highest scores.
+
     Feature ranking is performed by computing the scores of each feature using a scoring function:
         - f_classification: ANOVA F-value between label/feature for classification tasks.
         - f_regression: F-value for regression tasks.
 
     Parameters
     ----------
-    score_func : callable
-        Function taking dataset and returning (scores, p_values).
     percentile : int or float, default=10
         If int, number of top features to select.
         If float, fraction of top features to select.
-
-    Attributes
-    ----------
-    F_ : array, shape (n_features,)
-        F scores of features.
-    p_ : array, shape (n_features,)
-        p-values of F-scores.
+    score_func : callable, default=f_classification
+        Function taking dataset and returning (scores, p_values).
     """
 
     def __init__(self, percentile=10, score_func=f_classification):
@@ -34,20 +28,21 @@ class SelectPercentile(Transformer):
         ----------
         percentile : int or float, default=10
             Number or fraction of top features to select.
-        score_func : callable
+        score_func : callable, default=f_classification
             Function taking dataset and returning (scores, p_values).
         """
         super().__init__()
         self.percentile = percentile
-        self.score_func = score_func 
-        self.F_ = None  
-        self.p_ = None 
+        self.score_func = score_func
+        self.F_ = None
+        self.p_ = None
 
     def _fit(self, dataset: Dataset) -> 'SelectPercentile':
         """
         Fit the SelectPercentile model using the dataset.
+
         Compute the scores and p-values for all features.
-        
+
         Parameters
         ----------
         dataset : Dataset
@@ -80,26 +75,35 @@ class SelectPercentile(Transformer):
             raise RuntimeError("The transformer has not been fitted yet.")
 
         n_features = dataset.X.shape[1]
+
+        if self.percentile == 0:
+            X_transformed = np.empty((dataset.X.shape[0], 0))
+            transformed_dataset = Dataset(X_transformed, dataset.y, features=[], label=dataset.label)
+            return transformed_dataset
+
         if isinstance(self.percentile, float):
-            n_selected = int(self.percentile * n_features) 
+            n_selected = int(self.percentile * n_features)
         else:
             n_selected = self.percentile
 
-        sorted_F = np.sort(self.F_)
-        n_selected = min(n_selected, n_features) 
-        
-        if n_selected <= 0:
-            selected_indices = np.array([], dtype=int) 
-            threshold = -np.inf 
-            threshold = sorted_F[-n_selected]
+        n_selected = min(n_selected, n_features)
 
-            mask = self.F_ >= threshold
+        if n_selected <= 0:
+            X_transformed = np.empty((dataset.X.shape[0], 0))
+            transformed_dataset = Dataset(X_transformed, dataset.y, features=[], label=dataset.label)
+            return transformed_dataset
+
+        sorted_F = np.sort(self.F_)
+        threshold = sorted_F[-n_selected]
+
+        mask = self.F_ >= threshold
+
+        if np.sum(mask) > n_selected:
+            sorted_indices = np.argsort(self.F_)
+            selected_indices = sorted_indices[-n_selected:]
+        else:
             selected_indices = np.where(mask)[0]
 
-            if len(selected_indices) > n_selected:
-                top_indices = np.argsort(self.F_)[-n_selected:]
-                selected_indices = top_indices
-        
         X_transformed = dataset.X[:, selected_indices]
         y_transformed = dataset.y
 

@@ -177,3 +177,82 @@ class ReLUActivation(ActivationLayer):
             The derivative of the activation function.
         """
         return np.where(input >= 0, 1, 0)
+
+class TanhActivation(ActivationLayer):
+    """
+    Tanh activation function.
+    """
+
+    def activation_function(self, input: np.ndarray) -> np.ndarray:
+        """
+        Tanh activation function.
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output of the layer.
+        """
+        return np.tanh(input)
+
+    def derivative(self, input: np.ndarray) -> np.ndarray:
+        """
+        Derivative of the Tanh activation function.
+        f'(x) = 1 - tanh(x)^2
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The derivative of the activation function.
+        """
+        return 1 - np.square(self.activation_function(input))
+
+class SoftmaxActivation(ActivationLayer):
+    """
+    Softmax activation function.
+    """
+
+    def activation_function(self, input: np.ndarray) -> np.ndarray:
+        """
+        Softmax activation function with numerical stability.
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer (logits).
+
+        Returns
+        -------
+        numpy.ndarray
+            The probability distribution.
+        """
+        exp_input = np.exp(input - np.max(input, axis=-1, keepdims=True))
+        return exp_input / np.sum(exp_input, axis=-1, keepdims=True)
+
+    def derivative(self, input: np.ndarray) -> np.ndarray:
+        """
+        Derivative of the Softmax activation function.
+        Note: This is a simplified version often used in backpropagation 
+        when paired with Cross-Entropy.
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The derivative of the activation function.
+        """
+        softmax_output = self.activation_function(input)
+        return softmax_output * (1 - softmax_output)
