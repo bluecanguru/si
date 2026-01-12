@@ -9,20 +9,9 @@ from si.metrics.accuracy import accuracy
 from si.data.dataset import Dataset
 
 class TestExercise16(unittest.TestCase):
-    """
-    Unit tests for the neural network integration in Exercise 16.
-
-    This class contains tests to verify the correct implementation and behavior of a neural network
-    with dense layers, activation functions, and training procedures.
-    """
 
     def setUp(self):
-        """
-        Set up the test fixtures.
-
-        This method is called before each test method. It prepares a synthetic dataset and
-        initializes a neural network with a specific architecture for testing purposes.
-        """
+       
         self.X = np.random.rand(64, 32)
         self.y = np.random.randint(0, 2, 64)
         self.dataset = Dataset(self.X, self.y)
@@ -44,12 +33,7 @@ class TestExercise16(unittest.TestCase):
         self.net.add(SigmoidActivation())    
 
     def test_layer_shapes(self):
-        """
-        Test if the layer chaining respects the expected dimensionality reduction.
-
-        This test verifies that each layer in the network produces the correct output shape,
-        ensuring that the architecture is correctly defined and that the layers are properly connected.
-        """
+        
         # Layer 1 (Dense): 32 -> 16
         self.assertEqual(self.net.layers[0].output_shape(), (16,))
         # Layer 3 (Dense 2): 16 -> 8
@@ -58,12 +42,7 @@ class TestExercise16(unittest.TestCase):
         self.assertEqual(self.net.layers[4].output_shape(), (1,))
 
     def test_model_fit(self):
-        """
-        Test if the fit method completes training and generates a history.
-
-        This test verifies that the neural network can be trained for the specified number of epochs
-        and that the training history is correctly recorded, including loss values for each epoch.
-        """
+        
         self.net.fit(self.dataset)
 
         self.assertEqual(len(self.net.history), 10)
@@ -71,12 +50,7 @@ class TestExercise16(unittest.TestCase):
         self.assertIn('loss', self.net.history[1])
 
     def test_predict_output_range(self):
-        """
-        Test if the final Sigmoid activation maintains output values between 0 and 1.
-
-        This test verifies that after training, the network's predictions are within the valid range
-        for a sigmoid activation function, which is essential for binary classification tasks.
-        """
+        
         self.net.fit(self.dataset)
 
         predictions = self.net.predict(self.dataset)

@@ -79,7 +79,7 @@ class TestSelectPercentile(unittest.TestCase):
         self.assertEqual(len(transformed_dataset.features), self.dataset.X.shape[1])
 
     def test_fit_transform(self):
-        selector = SelectPercentile(percentile=0.5)  # Select 50% of features
+        selector = SelectPercentile(percentile=0.5)  
         transformed_dataset = selector.fit_transform(self.dataset)
 
         n_features = self.dataset.X.shape[1]
@@ -95,8 +95,8 @@ class TestSelectPercentile(unittest.TestCase):
         features = ['feature1', 'feature2', 'feature3', 'feature4', 'feature5']
         mock_dataset = Dataset(X, y, features=features, label='target')
 
-        selector = SelectPercentile(percentile=0.6)  # Should select 3 features
-        selector.F_ = np.array([1.0, 3.0, 3.0, 3.0, 5.0])  # Three features have the same F-value of 3.0
+        selector = SelectPercentile(percentile=0.6)  
+        selector.F_ = np.array([1.0, 3.0, 3.0, 3.0, 5.0])  
         selector.p_ = np.array([0.5, 0.3, 0.3, 0.3, 0.1])
 
         transformed_dataset = selector.transform(mock_dataset)

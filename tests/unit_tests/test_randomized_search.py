@@ -5,41 +5,17 @@ from si.models.logistic_regression import LogisticRegression
 from si.model_selection.randomized_search import randomized_search_cv
 
 class TestRandomizedSearch(unittest.TestCase):
-    """
-    Unit tests for the randomized search cross-validation functionality.
-
-    This class contains tests to verify the correct implementation and behavior of
-    the randomized_search_cv function, which performs hyperparameter optimization
-    using randomized search with cross-validation.
-    """
-
+    
     def setUp(self):
-        """
-        Set up the test fixtures.
-
-        Loads the breast-bin.csv dataset and initializes a LogisticRegression model
-        for use in the randomized search tests.
-        """
         self.dataset = read_csv('datasets/breast_bin/breast-bin.csv', label=True)
 
         self.model = LogisticRegression()
 
     def test_randomized_search_cv(self):
-        """
-        Test the randomized_search_cv function.
-
-        Performs a randomized search with cross-validation using a specified
-        hyperparameter grid and validates the structure and content of the results.
-
-        The test verifies that:
-        1. The correct number of scores and hyperparameter sets are returned
-        2. A best score is computed
-        3. The best hyperparameters include the expected parameters
-        """
         parameter_grid = {
-            'l2_penalty': np.linspace(1, 10, 10),  # L2 regularization strength
-            'alpha': np.linspace(0.001, 0.0001, 100),  # Learning rate
-            'max_iter': np.linspace(1000, 2000, 200).astype(int)  # Maximum iterations
+            'l2_penalty': np.linspace(1, 10, 10),  
+            'alpha': np.linspace(0.001, 0.0001, 100),  
+            'max_iter': np.linspace(1000, 2000, 200).astype(int)  
         }
 
         results = randomized_search_cv(

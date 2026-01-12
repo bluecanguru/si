@@ -10,21 +10,9 @@ from si.models.logistic_regression import LogisticRegression
 from si.models.decision_tree_classifier import DecisionTreeClassifier
 
 class TestStackingClassifier(unittest.TestCase):
-    """
-    Unit tests for the StackingClassifier ensemble model.
-
-    This class contains tests to verify the correct implementation and behavior of the
-    StackingClassifier, including its fitting, prediction, and scoring capabilities.
-    """
-
+    
     @classmethod
     def setUpClass(cls):
-        """
-        Set up the test class with dataset.
-
-        Loads the breast-bin dataset or creates a synthetic dataset if the file is not found.
-        Splits the dataset into training and testing sets for use in the tests.
-        """
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         data_path = os.path.join(base_dir, 'datasets', 'breast-bin', 'breast-bin.csv')
 
@@ -42,12 +30,6 @@ class TestStackingClassifier(unittest.TestCase):
         cls.train_data, cls.test_data = train_test_split(cls.dataset, test_size=0.2, random_state=42)
 
     def test_stacking_classifier_fit(self):
-        """
-        Test the fit method of the StackingClassifier.
-
-        Verifies that the StackingClassifier can be fitted to the training data and that
-        all component models are properly trained.
-        """
         knn = KNNClassifier(k=3)
         logistic_regression = LogisticRegression(learning_rate=0.01, max_iter=1000)
         decision_tree = DecisionTreeClassifier(max_depth=5)
@@ -73,12 +55,6 @@ class TestStackingClassifier(unittest.TestCase):
         self.assertIsNotNone(final_predictions)
 
     def test_stacking_classifier_predict(self):
-        """
-        Test the predict method of the StackingClassifier.
-
-        Verifies that the StackingClassifier can make predictions on new data and that
-        the predictions have the correct format and length.
-        """
         knn = KNNClassifier(k=3)
         logistic_regression = LogisticRegression(learning_rate=0.01, max_iter=1000)
         decision_tree = DecisionTreeClassifier(max_depth=5)
@@ -98,12 +74,6 @@ class TestStackingClassifier(unittest.TestCase):
         self.assertEqual(len(y_pred), len(self.test_data.y))
 
     def test_stacking_classifier_score(self):
-        """
-        Test the score method of the StackingClassifier.
-
-        Verifies that the StackingClassifier can compute an accuracy score on the test set
-        and that the score is a valid value between 0 and 1.
-        """
         knn = KNNClassifier(k=3)
         logistic_regression = LogisticRegression(learning_rate=0.01, max_iter=1000)
         decision_tree = DecisionTreeClassifier(max_depth=5)
